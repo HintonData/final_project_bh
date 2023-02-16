@@ -1,0 +1,252 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(lubridate)
+animal_complaints <- read_csv("data/animal_complaints.csv") %>%
+  clean_names()
+animal_outcomes <- read_csv("data/animal_outcomes.csv") %>% 
+  clean_names
+brisbane_complaints <- read_csv("data/brisbane_complaints.csv") %>% 
+  clean_names()
+```
+
+Rough analysis:
+```{r}
+animal_complaints %>% 
+  group_by(animal_type) %>% 
+  count()
+
+animal_complaints %>% 
+  group_by(animal_type, complaint_type) %>% 
+  count()
+
+animal_complaints %>% 
+  group_by(complaint_type) %>% 
+  count()
+
+# In general, it seems like dogs are getting far more complaints and much worse kind of complaints. Could just be more dogs in general, and clearly dogs are more likely to be aggressive according to this data.
+```
+
+```{r}
+animal_complaints %>% 
+  distinct(suburb)
+# We have 85 different suburbs
+
+animal_complaints %>% 
+  distinct(electoral_division)
+# 10 electoral divisions plus one Unallocated
+
+animal_complaints %>% 
+  distinct(date_received)
+# spans Oct 2013-June 2020
+```
+
+
+Is there are a trend in injuries By Region, and is there different peaks of times of year per region?
+```{r}
+animal_complaints %>% 
+  group_by(electoral_division) %>% 
+  ggplot(aes(x = electoral_division, fill = complaint_type)) +
+  geom_bar()
+# note, this doesn't take into account population
+```
+
+I've pivoted the data longer, so the regions and counts of outcomes have their own column. This will make analysis easier, as each column has only one variable
+```{r}
+animal_outcomes_tidy <- animal_outcomes %>% 
+  pivot_longer(act:wa, names_to = "region", values_to = "count")
+```
+Adding proportions to animal_outcomes_tidy:
+
+We're adding proportions 
+
+```{r}
+# grouping by region
+animal_outcomes_tidy %>% 
+  group_by(region) %>% 
+  summarise(prop = sum(count, na.rm = TRUE) / sum(total, na.rm = TRUE))
+
+animal_outcomes_tidy %>% 
+  group_by(outcome, region) %>% 
+  summarise(prop = sum(count, na.rm = TRUE) / sum(total, na.rm = TRUE)) %>% 
+  ggplot(aes(x = region, y = prop, fill = region)) +
+  geom_col()
+
+animal_outcomes_tidy %>% 
+  ggplot(aes(x = region, fill = outcome)) +
+  geom_bar(position = "fill")
+
+# animal_outcomes_tidy %>% 
+#   group_by(region, outcome) %>% 
+#   summarise(prop = sum(count, na.rm = TRUE) / sum(total, na.rm = TRUE)) %>% 
+#   ggplot(aes(x = region, y = prop, fill = outcome)) +
+#   geom_col()
+
+animal_outcomes
+```
+
+
+
+```{r}
+animal_outcomes_tidy %>% 
+  group_by(region) %>% 
+  ggplot(aes(x = region, y = count, fill = outcome, col = outcome)) +
+  geom_col(position = "fill")
+```
+
+At first glance, qld and nsw have a huge amount of euthanizations.
+
+
+
+
+
+BRISBANE DATA:
+data_range column needs to be cleaned up.
+Nature is a useless column and can be removed
+
+```{r}
+brisbane_complaints_tidy <- brisbane_complaints %>% 
+  select(-nature, -responsible_office, -city) %>% 
+  mutate(date_range = str_remove_all(date_range, ".csv")) %>% 
+  mutate(date_range = str_replace_all(date_range, "1st-quarter-2016-17", "Q1 2016")) %>% 
+  mutate(date_range = str_replace_all(date_range, "april-june-2016", "Q2 2016")) %>%  
+  mutate(date_range = str_replace_all(date_range, "october-to-december-2016", "Q4 2016")) %>% 
+  mutate(date_range = str_replace_all(date_range, "january-to-march-2017", "Q1 2017")) %>% 
+  mutate(date_range = str_replace_all(date_range, "april-to-june-2017", "Q2 2017")) %>% 
+  mutate(date_range = str_replace_all(date_range, "july-to-september-2017", "Q3 2017")) %>% 
+  mutate(date_range = str_replace_all(date_range, "october-to-december-2017", "Q4 2017")) %>% 
+  mutate(date_range = str_replace_all(date_range, "jan-to-mar-2018", "Q1 2018")) %>% 
+  mutate(date_range = str_replace_all(date_range, "apr-to-jun-2018", "Q2 2018")) %>% 
+  mutate(date_range = str_replace_all(date_range, "jul-to-sep-2018", "Q3 2018")) %>% 
+  mutate(date_range = str_replace_all(date_range, "oct-to-dec-2018", "Q4 2018")) %>% 
+  mutate(date_range = str_replace_all(date_range, "jan-mar-2019", "Q1 2019")) %>% 
+  mutate(date_range = str_replace_all(date_range, "apr-jun-2019", "Q2 2019")) %>% 
+  mutate(date_range = str_replace_all(date_range, "jul-to-sep-2019", "Q3 2019")) %>% 
+  mutate(date_range = str_replace_all(date_range, "cars-srsa-open-data-animal-related-complaints-oct-to-dec-2019", "Q4 2019")) %>%
+  mutate(date_range = str_replace_all(date_range, "cars-srsa-open-data-animal-related-complaints-jan-to-mar-2020", "Q1 2020")) %>% 
+  mutate(date_range = str_replace_all(date_range, "cars-srsa-open-data-animal-related-complaints-apr-to-jun-2020", "Q2 2020")) %>% 
+  mutate(date_range = factor(date_range, levels = c("Q1 2016", "Q2 2016", "Q3 2016", "Q4 2016", "Q1 2017", "Q2 2017", "Q3 2017", "Q4 2017", "Q1 2018", "Q2 2018", "Q3 2018", "Q4 2018", "Q1 2019", "Q2 2019", "Q3 2019", "Q4 2019", "Q1 2020", "Q2 2020"))) %>% 
+  mutate(suburb = str_to_title(suburb))
+```
+
+
+```{r}
+brisbane_complaints %>% 
+  distinct(category)
+
+brisbane_complaints %>% 
+  distinct(nature)
+
+brisbane_complaints %>% 
+  distinct(animal_type)
+
+brisbane_complaints %>% 
+  distinct(city)
+```
+
+```{r}
+brisbane_complaints_tidy %>% 
+  ggplot(aes(x = date_range, fill = category)) +
+  geom_bar()
+```
+
+Cleaning animal_complaints:
+```{r}
+animal_complaints_tidy <- animal_complaints %>% 
+  mutate(date_received = my(date_received))
+```
+
+
+Cleaning animal_outcomes:
+```{r}
+animal_outcomes %>% 
+  distinct(year)
+
+animal_outcomes_tidy <- animal_outcomes %>% 
+  mutate(year = factor(year, levels = c("1999", "2000", "2001", "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018")))
+```
+
+```{r}
+brisbane_complaints_tidy %>% 
+  group_by(category) %>% 
+  count() %>% 
+  arrange(desc(n))
+
+brisbane_complaints_tidy %>% 
+  group_by(animal_type) %>% 
+  count() %>% 
+  arrange(desc(n))
+
+brisbane_complaints_tidy %>% 
+  group_by(animal_type, category) %>% 
+  count() %>%
+  arrange(desc(n))
+```
+
+
+```{r}
+brisbane_complaints_tidy <- brisbane_complaints_tidy %>%
+  unite('type', animal_type:category, sep = " - ") %>% 
+  mutate(type = str_remove_all(type, " - NA")) %>% 
+  mutate(type = str_remove_all(type, " - Dog")) %>% 
+  mutate(type = str_replace_all(type, "Other Animal - Not An Attack", "Other Animal")) %>%
+  mutate(type = str_replace_all(type, "Dog - Nuisance Animal", "Dog")) %>%
+  mutate(type = str_replace_all(type, "Cat - Unregistered", "Cat")) %>%
+  mutate(type = str_replace_all(type, "Cat - Odour", "Cat")) %>%
+  mutate(type = str_replace_all(type, "Attack - Rabbit", "Attack")) %>%
+  mutate(type = str_replace_all(type, "Attack - Fencing Issues", "Attack")) %>%
+  mutate(type = str_replace_all(type, "Dog - Surrender", "Dog")) %>%
+  mutate(type = str_replace_all(type, "Attack - Rabbit", "Attack")) %>%
+  mutate(type = str_replace_all(type, "Other Animal - Feral Goat", "Pest / Feral Animal")) %>%
+  mutate(type = str_replace_all(type, "Other Animal - Feral Cat", "Pest / Feral Animal")) %>%
+  mutate(type = str_replace_all(type, "Other Animal - Feral Pig", "Pest / Feral Animal")) %>%
+  mutate(type = str_replace_all(type, "Other Animal - Pest / Feral Animal", "Pest / Feral Animal")) %>%
+  mutate(type = str_replace_all(type, "Other Animal - Deer", "Deer")) %>%
+  mutate(type = str_replace_all(type, "Other Animal - Fox", "Fox")) %>%
+  mutate(type = str_replace_all(type, "Attack - Dangerous", "Unspecified - Dangerous Attack")) %>%
+  # First the columns will be seperated again then "Attack" will be replaced
+  mutate(type = str_replace_all(type, "Attack - Attack On An Animal", "Unspecified - Attack On An Animal")) %>% 
+  mutate(type = str_replace_all(type, "Cat Trapping", "Cat - Trapping")) %>% 
+  mutate(type = str_replace_all(type, "Attack - Attack On A Person", "Unspecified - Attack On A Person")) %>% 
+  mutate(type = str_replace_all(type, "Attack - Not An Attack", "Unspecified - Not An Attack")) %>% 
+  mutate(type = str_replace_all(type, "Attack - Menacing", "Unspecified - Menacing")) %>%
+  mutate(type = str_replace_all(type, "Other Animal - Wild Dog", "Wild Dog")) %>%
+  mutate(type = str_replace_all(type, "Other Animal - Rabbit", "Rabbit")) %>%
+  # mutate(type = str_replace_all(type, "Attack", "Unspecified - Attack")) %>%
+  separate(col = type, into = c("type_of_animal", "complaint"), sep = " - ") %>% 
+  mutate(complaint = if_else(type_of_animal == "Attack", "Attack", complaint)) %>% 
+  mutate(type_of_animal = str_replace_all(type_of_animal, "Attack", "Unspecified")) %>% 
+  mutate(complaint = if_else(is.na(complaint), "Other", complaint))
+```
+
+
+```{r}
+brisbane_complaints_tidy %>% 
+  group_by(type_of_animal) %>% 
+  count(sort = TRUE)
+```
+
+replace NAs after separating columns again with "Other". The coluumns will be "animal" on the left, and "type_of_complaint" on the right.
+"Other Animal" is where it specifically says it is a different animal. "Unspecified" is mainly for the Attack column. We simply don't know if it's a cat, dog, deer or any information. Many of these may be dogs or cats, we don't have the information on this. So we have to record it as "Unspecified" else the column for animal type simply makes no logical sense.
+
+
+Note; cat trapping refers to feral or stray cats
+
+
+
+
+
+
+
+
+
+
+
+
+
+

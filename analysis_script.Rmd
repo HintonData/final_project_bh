@@ -1,0 +1,16 @@
+---
+title: "Analysis Script"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+source("cleaning_script.R")
+```
+
+```{r}
+animal_complaints
+brisbane_complaints
+animal_outcomes
+```
+
