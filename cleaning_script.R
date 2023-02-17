@@ -30,6 +30,24 @@ brisbane_complaints <- brisbane_complaints %>%
   mutate(date_range = factor(date_range, levels = c("Q1 2016", "Q2 2016", "Q3 2016", "Q4 2016", "Q1 2017", "Q2 2017", "Q3 2017", "Q4 2017", "Q1 2018", "Q2 2018", "Q3 2018", "Q4 2018", "Q1 2019", "Q2 2019", "Q3 2019", "Q4 2019", "Q1 2020", "Q2 2020"))) %>% 
   mutate(suburb = str_to_title(suburb))
 
+# create a new column to hold the year
+brisbane_complaints$year <- as.integer(substring(as.character(brisbane_complaints$date_range), 4))
+
+# create a new column to hold the quarter
+brisbane_complaints$quarter_str <- substring(as.character(brisbane_complaints$date_range), 1, 2)
+
+# create a lookup table for the quarters
+quarters <- c("Q1", "Q2", "Q3", "Q4")
+
+# map the quarters to their numerical value
+brisbane_complaints$quarter <- match(brisbane_complaints$quarter_str, quarters)
+
+# create the date column
+brisbane_complaints$date <- yq(paste(brisbane_complaints$year, brisbane_complaints$quarter, sep = "-"))
+
+brisbane_complaints <- brisbane_complaints %>% 
+  select(-quarter, -quarter_str, -date_range)
+
 
 brisbane_complaints <- brisbane_complaints %>%
   unite('type', animal_type:category, sep = " - ") %>% 
@@ -80,4 +98,4 @@ animal_outcomes <- read_csv("data/animal_outcomes.csv") %>%
 
 animal_outcomes <- animal_outcomes %>% 
   pivot_longer(act:wa, names_to = "region", values_to = "number_of_occurences") %>% 
-  mutate(year = factor(year, levels = c("1999", "2000", "2001", "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018")))
+  mutate(year = ymd(paste0(year, "-01-01")))

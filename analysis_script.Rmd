@@ -1,16 +1,181 @@
 ---
-title: "Analysis Script"
+title: "Analysis"
 output: html_notebook
 ---
 
-```{r}
-library(tidyverse)
-source("cleaning_script.R")
-```
+BUSINESS QUESTIONS:
+Note: ignore the fact there is no question 1, this is due to a formatting error
+2. 
+a) Is there are a trend in injuries By Region, and is there different peaks of times of year per region?
+b) Analysis on the types of animals that are injured, this also by Region – is there a species that is more liable to injury in certain regions?
+c) What is the outcome? Does this differ by region?
+
+3.
+a) Total call volume for complaint calls: How has this trended over time?
+b) Is there a particular animal being called about the most?
+c) Do particular suburbs have different type of complaint calls? Do they call about different animals? ((MAKE A LEAFLET MAP FOR THIS!))
+
+4.
+Business Intelligence – using the insights you have found, can you predict how this might look for the upcoming year?
 
 ```{r}
-animal_complaints
-brisbane_complaints
-animal_outcomes
+library(tidyverse)
+library(tsibble)
+library(forecast)
+source("cleaning_script.R")
+library(zoo)
 ```
+
+Note; summer in Australia seasons:
+Summer: December - February
+Autumn: March - May
+Winter: June - August
+Spring: September - November
+
+also: The 'wet season' in Australia's North: November - April
+
+Intro:
+Introduce the point of the talk, talk about Australian RSPCA, talk about how the data was gathered (using the information from the websites), the PURPOSE of this investigation (which is to help the RSPCA know which areas/animals to focus their efforts on), as I'm introducing the datasets I can introduce the two different cities. First, we can talk a short bit about Australia as a whole, it's climate, the kind of animals etc. The point here is to really set the scene before diving too deep into facts and figures, as especially a non-technical audience this will help keep them engaged and make a more holistic presentation. In my opinion, it's always good to zoom out and see the big picture, rather than getting lost in the myopia of some csv files.
+
+Townsville Intro:
+Townsville is a city on the north-eastern coast of Queensland, Australia. With a population of 180,820 as of June 2018, it is the largest settlement in North Queensland; it is unofficially considered its capital. [note: put a map of Australia with Queensland and Townsville highlighted here. Talk a little bit about the population density, urbanisation, climate, types of animals that are common here etc. Show some photos of the area too]
+
+Brisbane Intro:
+Exact same as above
+
+### 3.
+a) Total call volume for complaint calls: How has this trended over time?
+
+First, let's look at the Townsville animal complaints.
+```{r}
+animal_complaints %>% 
+  group_by(date_received) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = date_received, y = count)) +
+  geom_line() +
+  scale_x_date(date_breaks = "6 months", date_labels = "%b-%y")
+```
+This shows some seasonality and also an increase then a decline. Each summer (in December) the calls are much lower, rising again each Winter. Using geom_smooth, we get:
+
+```{r}
+animal_complaints %>% 
+  group_by(date_received) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = date_received, y = count)) +
+  geom_smooth() +
+  geom_smooth() +
+  scale_x_date(date_breaks = "1 year", date_labels = "%y")
+```
+
+This shows a bit more clearly the general trend of call volume. From 2014 it steadily rises, peaking in 2017. Afterwards, it steadily declines to only slightly higher than where it started. It would be very difficult to say whether this trend will continue downward, go upward or stay relatively flat.
+
+
+
+
+
+
+
+Note; if we have time or if it's helpful, we will fix this graph so that quarters are properly displayed.
+```{r}
+brisbane_complaints %>% 
+  group_by(date) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = date, y = count)) +
+  geom_point() +
+  scale_x_date(date_breaks = "3 months", date_labels = "%y")
+```
+
+Again, we see the seasonality of winter having more calls. The fact this is in both Brisbane and Townsville suggests a fairly general trend.
+
+```{r}
+brisbane_complaints %>% 
+  group_by(date) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = date, y = count)) +
+  geom_point() +
+  geom_smooth() +
+  scale_x_date(date_breaks = "1 year", date_labels = "20%y")
+```
+
+Other than declining a little over 2016, the number of calls sees a slow but steady increase towards 2020, being thousands more than it was in 2016 and 2017. So, the general trend is that the RSPCA are getting more complaints as time goes on. Now, this does not necessarily mean the line will continue to go up. We are also missing Q3 from 2016 so this skews the curve a little
+
+
+
+### 3.
+b) Is there a particular animal being called about the most?
+
+```{r}
+animal_complaints %>% 
+  group_by(animal_type) %>% 
+  ggplot(aes(x = animal_type)) +
+  geom_bar()
+```
+
+The number of calls about dogs dwarf those about cats hugely. Let's look at specific numbers:
+```{r}
+animal_complaints %>% 
+  group_by(animal_type) %>%
+  count() %>% 
+  summarise(n, 4094 / 38319)
+```
+
+So cats account for only 10% of the calls dogs do for Townsville! Let's look at Brisbane:
+
+```{r}
+brisbane_complaints %>% 
+  group_by(type_of_animal) %>%
+  count()
+
+brisbane_complaints %>% 
+  group_by(type_of_animal) %>%
+  ggplot(aes(x = type_of_animal)) +
+  geom_bar()
+```
+
+We have a lot more animal types here that we don't in the previous data. We also have many calls about Attacks with no animal specified, many of which it is very likely they were involving dogs. However, we can't say this for sure.
+
+So that makes 
+```{r}
+4745 / 13334  # cats are 35% of the calls compared to dogs
+
+
+
+# all other animals divided by dogs, leaving out unspecified (which we believe potentially contain a high proportion of dogs)
+9457 / 13349
+```
+
+Most of the other animals have very small counts, interestingly foxes seem to make up a decent proportion of the calls regarding wild animals.
+
+To answer the question however, it's mainly dogs and cats, and especially dogs. Dogs are being called about more than any of the other animals combined (if we leave Unspecified to the side)
+
+(Attack refers to the initial description of the complaint)
+
+
+### 3. 
+c) Do particular suburbs have different type of complaint calls? Do they call about different animals?
+
+OK, so this one is difficult simply for the fact there is a huge amount of suburbs.
+```{r}
+brisbane_complaints %>% 
+  group_by(suburb) %>% 
+  count()
+
+# There is 192 suburbs! Certainly using a fill on a graph is not gonna work, neither is putting them on the x-axis on a bar graph.
+
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  count()
+# 85 suburbs for Townsville
+
+animal_complaints %>% 
+  group_by(electoral_division) %>% 
+  count()
+# also 11 electoral divisions. Could we look at suburbs one electoral division at a time? Possibly
+```
+
+
+
+
+
+
 

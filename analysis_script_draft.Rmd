@@ -1,0 +1,48 @@
+---
+title: "Analysis Script"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+source("cleaning_script.R")
+```
+Some more exploratory analysis first:
+```{r}
+brisbane_complaints %>% 
+  group_by(type_of_animal) %>% 
+  ggplot(aes(x = type_of_animal, col = complaint, fill = complaint)) +
+  geom_bar(position = "fill")
+
+brisbane_complaints %>% 
+  group_by(type_of_animal) %>% 
+  ggplot(aes(x = type_of_animal, fill = suburb)) +
+  geom_bar()
+```
+
+```{r}
+animal_complaints %>% 
+  group_by(complaint_type) %>% 
+  ggplot(aes(x = complaint_type, fill = animal_type)) +
+  geom_bar(position = "fill")
+
+animal_complaints %>% 
+  group_by(date_received) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = date_received, y = count)) +
+  geom_line()
+```
+
+What are the challenges I am facing now? 
+
+1) There are far too many suburbs in the Brisbane dataset. How do I create any useful visualisation or analysis with so much areas?
+
+2) I need more clarity and to be more specific in what I am doing. I am currently still in "explore" mode, but I may need to pick a question and focus on that. As it stands, it feels like I'm making no progress and running around in circles, I need to stay on track and focus. Keeping the questions in mind at all times is very important for this.
+
+
+
+
+
+
+
+
