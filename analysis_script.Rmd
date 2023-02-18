@@ -7,7 +7,7 @@ BUSINESS QUESTIONS:
 Note: ignore the fact there is no question 1, this is due to a formatting error
 2. 
 a) Is there are a trend in injuries By Region, and is there different peaks of times of year per region?
-b) Analysis on the types of animals that are injured, this also by Region – is there a species that is more liable to injury in certain regions?
+b) Analysis on the types of animals that are injured, this also by Region – is there a species that is more liable to injury in certain regions? - (cat/dog by region)
 c) What is the outcome? Does this differ by region?
 
 3.
@@ -23,7 +23,6 @@ library(tidyverse)
 library(tsibble)
 library(forecast)
 source("cleaning_script.R")
-library(zoo)
 ```
 
 Note; summer in Australia seasons:
@@ -33,6 +32,8 @@ Winter: June - August
 Spring: September - November
 
 also: The 'wet season' in Australia's North: November - April
+
+https://www.mdpi.com/2076-2615/8/7/100   will useful reading for later, talk about the need to reduce euthanasia or similar and the effect this has on people
 
 Intro:
 Introduce the point of the talk, talk about Australian RSPCA, talk about how the data was gathered (using the information from the websites), the PURPOSE of this investigation (which is to help the RSPCA know which areas/animals to focus their efforts on), as I'm introducing the datasets I can introduce the two different cities. First, we can talk a short bit about Australia as a whole, it's climate, the kind of animals etc. The point here is to really set the scene before diving too deep into facts and figures, as especially a non-technical audience this will help keep them engaged and make a more holistic presentation. In my opinion, it's always good to zoom out and see the big picture, rather than getting lost in the myopia of some csv files.
@@ -63,7 +64,7 @@ animal_complaints %>%
   summarise(count = n()) %>% 
   ggplot(aes(x = date_received, y = count)) +
   geom_smooth() +
-  geom_smooth() +
+  geom_point() +
   scale_x_date(date_breaks = "1 year", date_labels = "%y")
 ```
 
@@ -82,6 +83,7 @@ brisbane_complaints %>%
   summarise(count = n()) %>% 
   ggplot(aes(x = date, y = count)) +
   geom_point() +
+  geom_line() +
   scale_x_date(date_breaks = "3 months", date_labels = "%y")
 ```
 
@@ -172,6 +174,266 @@ animal_complaints %>%
   count()
 # also 11 electoral divisions. Could we look at suburbs one electoral division at a time? Possibly
 ```
+
+Idea: What about using leaflet to visualise types of complaint calls on a map?
+
+This is more feasible with the Townsville datasets, as it has less suburbs and only 6 types of complaints. It may be necessary to try and wrangle the Brisbane data a little further to narrow down categories (for both type_of_animal and complaint_type)
+
+FOR TOWNSVILLE WE HAVE:
+85 different suburbs
+6 complaint types
+2 animal types
+
+We want to break it down by suburb and complaint type, and then by suburb and animal type
+```{r}
+animal_complaints %>% 
+  ggplot(aes(x = suburb, fill = animal_type)) +
+  geom_bar(position = "fill") +
+  coord_flip() +
+  scale_x_discrete(guide = guide_axis(n.dodge = 5))
+```
+
+```{r}
+animal_complaints %>% 
+  ggplot(aes(x = suburb, fill =complaint_type)) +
+  geom_bar(position = "fill") 
+  #coord_flip() +
+  #scale_x_discrete(guide = guide_axis(n.dodge = 5))
+```
+
+The challenge again, is having too many suburbs that we can't get any useful information out of the graphs
+
+```{r}
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  count(sort = TRUE)
+
+# let's drop any suburbs with less than 200 cases
+
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), animal_type) %>% 
+  filter(count >= 500) %>% 
+  ggplot(aes(x = suburb, y = count, fill = animal_type)) +
+  geom_col() +
+  coord_flip()
+```
+
+The highest count by quite a large margin is unallocated to a specific suburb.
+
+```{r}
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), animal_type) %>% 
+  filter(count >= 500) %>% 
+  ggplot(aes(x = suburb, y = count, fill = animal_type)) +
+  geom_col(position = "fill") +
+  coord_flip() 
+```
+At a glance, there's no big difference on animal types. All the suburbs have a large majority of dogs. Could we do a hypothesis test to see if there is a statistically significant difference?
+
+```{r}
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), animal_type) %>% 
+  filter(count < 500 & count > 100) %>% 
+  ggplot(aes(x = suburb, y = count, fill = animal_type)) +
+  geom_col(position = "fill") +
+  coord_flip() 
+```
+Looking at the lower end of the population, we see an outlier. Townsville City has way more cats than any of the other suburbs. In fact, it's almost 50/50!
+
+Now still looking at the Townsville dataset, we'll break it down by complaint type:
+```{r}
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), complaint_type) %>% 
+  filter(count >= 500 & count <= 4000) %>% 
+  ggplot(aes(x = suburb, y = count, fill = complaint_type)) +
+  geom_col(position = "fill") +
+  coord_flip() 
+```
+
+Now for the lower end of the count:
+```{r}
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), complaint_type) %>% 
+  filter(count < 500 & count > 50) %>% 
+  ggplot(aes(x = suburb, y = count, fill = complaint_type)) +
+  geom_col(position = "fill") +
+  coord_flip() 
+```
+
+I'm not sure much can be gleamed with so many complaint_types. Let's try focusing more specifically.
+
+One thing to note here, is the vast variation in tolerance for noise. Most categories are consistent except this one. Cluden for example has a small percentage of noise complaints,while Bohle Plains has a huge percentage. This requires more investigation to figure out the root cause of this: 
+
+```{r}
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), complaint_type) %>% 
+  filter(count >= 500) %>% 
+  filter(complaint_type == "Noise" | (complaint_type == "Attack")) %>% 
+  ggplot(aes(x = suburb, y = count, fill = complaint_type)) +
+  geom_col(position = "fill") +
+  coord_flip() 
+
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), complaint_type) %>% 
+  filter(count >= 500) %>% 
+  filter(complaint_type == "Noise" | (complaint_type == "Aggressive Animal")) %>% 
+  ggplot(aes(x = suburb, y = count, fill = complaint_type)) +
+  geom_col(position = "fill") +
+  coord_flip() 
+
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), complaint_type) %>% 
+  filter(count >= 500) %>% 
+  filter(complaint_type == "Wandering" | (complaint_type == "Aggressive Animal")) %>% 
+  ggplot(aes(x = suburb, y = count, fill = complaint_type)) +
+  geom_col(position = "fill") +
+  coord_flip() 
+
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), complaint_type) %>% 
+  filter(count >= 500) %>% 
+  filter(complaint_type == "Enclosure" | (complaint_type == "Noise")) %>% 
+  ggplot(aes(x = suburb, y = count, fill = complaint_type)) +
+  geom_col(position = "fill") +
+  coord_flip() 
+```
+
+For the less than 500 greater than 50 groups:
+```{r}
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), complaint_type) %>% 
+  filter(count < 500 & count > 100) %>% 
+  filter(complaint_type == "Noise" | (complaint_type == "Attack")) %>% 
+  ggplot(aes(x = suburb, y = count, fill = complaint_type)) +
+  geom_col(position = "fill") +
+  coord_flip() 
+
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), complaint_type) %>% 
+  filter(count < 500 & count > 100) %>%  
+  filter(complaint_type == "Noise" | (complaint_type == "Aggressive Animal")) %>% 
+  ggplot(aes(x = suburb, y = count, fill = complaint_type)) +
+  geom_col(position = "fill") +
+  coord_flip() 
+
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), complaint_type) %>% 
+  filter(count < 500 & count > 100) %>% 
+  filter(complaint_type == "Wandering" | (complaint_type == "Aggressive Animal")) %>% 
+  ggplot(aes(x = suburb, y = count, fill = complaint_type)) +
+  geom_col(position = "fill") +
+  coord_flip() 
+
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), complaint_type) %>% 
+  filter(count < 500 & count > 100) %>% 
+  #filter(complaint_type == "Enclosure" | (complaint_type == "Noise")) %>% 
+  ggplot(aes(x = suburb, y = count, fill = complaint_type)) +
+  geom_col(position = "fill") +
+  coord_flip() +
+  facet_wrap(~ suburb)
+```
+
+
+```{r}
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), complaint_type, animal_type) %>% 
+  filter(count < 500 & count > 100) %>% 
+  ggplot(aes(x = complaint_type, y = count, fill = complaint_type)) +
+  geom_col() +
+  facet_wrap(~ suburb)
+```
+
+From this graph, we can see that Hyde Park has a disproportionate amount of private impounds, while Bohle plains has more noise complaints.
+
+Potential hypothesis test:
+
+That the level of private impounds in Hyde Park being greater is statistically significant.
+
+That the level of noise in Bohle Plains being greater is statistically significant.
+```{r}
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  count() %>% 
+  filter(n < 500 & n > 100)
+```
+
+
+
+
+
+
+Let's look at the suburbs with much higher complaints now:
+
+```{r}
+animal_complaints %>% 
+  group_by(suburb) %>% 
+  summarise(count = n(), complaint_type, animal_type) %>% 
+  filter(count >= 500 & count <4000) %>% 
+  ggplot(aes(x = complaint_type, y = count, fill = complaint_type)) +
+  geom_col() +
+  facet_wrap(~ suburb)
+```
+
+
+
+
+
+### 2. a) Is there are a trend in injuries By Region, and is there different peaks of times of year per region?
+
+It's impossible to say if there's different peaks of times of yer per region, as we only have the data for the year as a whole. Unless we look at Suburb rather than region, and break this down by time. However, I think it'd be good to use the general Autralia (nationwide) data.
+
+
+
+
+
+
+
+
+
+```{r}
+animal_outcomes %>% 
+  group_by(region) %>% 
+  ggplot(aes(x = region, y = number_of_occurences, fill = outcome, col = outcome)) +
+  geom_col(position = "fill")
+```
+
+
+```{r}
+animal_outcomes %>% 
+  group_by(region, year) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = year, y = count)) +
+  #geom_point() +
+  geom_line() +
+  facet_wrap(~ region)
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

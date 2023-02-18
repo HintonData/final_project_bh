@@ -88,7 +88,8 @@ animal_complaints <- read_csv("data/animal_complaints.csv") %>%
   clean_names()
 
 animal_complaints <- animal_complaints %>% 
-  mutate(date_received = my(date_received))
+  mutate(date_received = my(date_received)) %>% 
+  mutate(animal_type = str_to_title(animal_type))
 
 
 
