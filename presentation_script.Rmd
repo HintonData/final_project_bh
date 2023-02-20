@@ -46,6 +46,10 @@ Business Intelligence – using the insights you have found, can you predict how
 
 ### Analysis
 
+So let's move onto the analysis, and began answering the business questions.
+
+
+
 ## Total call volume for complaint calls: How has this trended over time?
 
 First, I looked at the total call volume for complaint calls, to see how this trended over time. 
@@ -191,7 +195,7 @@ So, we can see quite clearly that dogs account for the majority of the calls, an
 
 ## Do particular suburbs have different type of complaint calls? Do they call about different animals?
 
-Now we will look at the data broken down by suburb and complaint type. This proved a little more difficult than one might first think. Brisbane has 192 suburbs, while Townsville has 85. I decided to first focus on the Townsville data, and distill the suburbs down to a more reasonable number. I wanted to look at suburbs with a similar amount of complaint calls. I focused on those with less than 500 and more than 100 calls. I decided that any suburb with less than 100 calls would be such a small number my percentages would be skewed, and no valid conclusions could be drawn. 
+Now we will look at the data broken down by suburb and complaint type. This proved a little more difficult than one might first think. Brisbane has 192 suburbs, while Townsville has 85. I decided to focus my efforts on the Townsville data, and distill the suburbs down to a more reasonable number. I wanted to look at suburbs with a similar amount of complaint calls. I focused on those with less than 500 and more than 100 calls. I decided that any suburb with less than 100 calls would be such a small number my percentages would be skewed, and no valid conclusions could be drawn. 
 
 ```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
 animal_complaints %>% 

@@ -908,7 +908,12 @@ forecast_values <- forecast(fit, h = 36)
 
 ### Next attempt for a model
 
-I want to predict the total cases for Australia. We won't break it down by region
+I want to predict the total cases for Australia. We won't break it down by region. So first, let's get our summary statistics and put it in a new variable:
+
+```{r}
+
+```
+
 
 
 
