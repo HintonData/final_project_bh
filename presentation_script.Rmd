@@ -5,7 +5,7 @@ output: html_notebook
 
 ### Introduction
 
-The Royal Society for the Prevention of Cruelty to Animals, or RSPCA, is Australia's oldest, largest and most trusted animal welfare organisation. In the year of 2020 alone they received over 1 million animals into their shelters and adoption centres across the country. Through hard work and concerted efforts, they have managed to increase their rates of adoption and reclaiming, improving the outcomes for hundreds of thousands of cats and dogs, who have either been reunited with their owners or have found a new home.
+The Royal Society for the Prevention of Cruelty to Animals, or RSPCA, is Australia's oldest, largest and most trusted animal welfare organisation. In the year of 2018 alone they received over 130,000 animals into their shelters and adoption centres across the country. Through hard work and concerted efforts, they have managed to increase their rates of adoption and reclaiming, improving the outcomes for hundreds of thousands of cats and dogs, who have either been reunited with their owners or have found a new home.
 
 In this presentation, I will answer questions that the RSPCA has asked for the purposes of gaining more insight into the animals, especially the cats and dogs, of Australia. This will help them make more informed decisions in the future through the power of data, with the goal of further increasing their rates of adoption and reclaiming. I believe my analysis will help the RSPCA move forward in their goal and improve animal welfare across Australia as a whole.
 
@@ -31,20 +31,22 @@ Both datasets consists of data gathered by their respective councils, and concer
 
 Here are the business questions I have been tasked with investigating:
 
-Is there are a trend in injuries By Region, and is there different peaks of times of year per region?
+How have the outcomes for different types of animal changed over time?
+Are there any major differences between the way different States of Australia deal with animals?
+Are there any anomalies in the data?
 
-Analysis on the types of animals that are injured, this also by Region – is there a species that is more liable to injury in certain regions?
-
-What is the outcome? Does this differ by region?
 
 Total call volume for complaint calls: How has this trended over time?
 Is there a particular animal being called about the most?
 Do particular suburbs have different type of complaint calls? Do they call about different animals?
 
+
 Business Intelligence – using the insights you have found, can you predict how this might look for the upcoming year?
 
 
 ### Analysis
+
+## Total call volume for complaint calls: How has this trended over time?
 
 First, I looked at the total call volume for complaint calls, to see how this trended over time. 
 
@@ -59,7 +61,7 @@ animal_complaints %>%
   group_by(date_received) %>% 
   summarise(count = n()) %>% 
   ggplot() +
-  aes(x = date_received, y = count) +
+  aes(x = date_received, y = count ) +
   geom_line(col = "blue") +
   scale_x_date(date_breaks = "6 months", date_labels = "%b %y") + 
   labs(title = "Townsville Complaint Calls",
@@ -146,6 +148,7 @@ With these graphs, we can see more clearly the general trend, ignoring seasonali
 
 For Brisbane, we can see a more clear trend upward over time, though there is only 4 years of data. This means any conclusions to be drawn from this should be taken with a grain of salt. 
 
+## Is there a particular animal being called about the most?
 
 Next, I looked at which animals were being called about the most. Again, I looked at both cities, and this time the conclusion was much more clear.
 
@@ -186,6 +189,7 @@ One interesting point is that the numbers for foxes are quite high for a wild an
 
 So, we can see quite clearly that dogs account for the majority of the calls, and overshadow cats in second place by a large margin.
 
+## Do particular suburbs have different type of complaint calls? Do they call about different animals?
 
 Now we will look at the data broken down by suburb and complaint type. This proved a little more difficult than one might first think. Brisbane has 192 suburbs, while Townsville has 85. I decided to first focus on the Townsville data, and distill the suburbs down to a more reasonable number. I wanted to look at suburbs with a similar amount of complaint calls. I focused on those with less than 500 and more than 100 calls. I decided that any suburb with less than 100 calls would be such a small number my percentages would be skewed, and no valid conclusions could be drawn. 
 
@@ -306,6 +310,111 @@ animal_complaints %>%
 ```
 
 Most suburbs have pretty much the same ratios of cats to dogs, except for Townsville City. This has close to 50:50 ratio, which is unprecedented for this data, and not seen in any other Townsville suburb (I checked even the other groups). This is the only suburb where this is the case. This could potentially indicate a large number of stray cats, but more investigation is needed to see why this is the case.
+
+
+
+## How have the outcomes for different types of animal changed over time?
+
+
+
+So for this, I decided to look at the outcomes for different animals across time.
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(outcome, animal_type, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  filter(outcome == "Rehomed" | outcome == "Euthanized") %>%   filter(animal_type != "Horses" & animal_type != "Livestock") %>%
+  ggplot(aes(x = year, y = total_injuries, color = outcome)) +
+  geom_line() +
+  facet_wrap(~animal_type, scales = "free_y") +
+  labs(x = "Date", y = "Number of Cases", color = "Outcome", title = "Outcomes Across Time for Animals") +
+  scale_fill_discrete(name = "Complaint Type") +
+  scale_y_continuous(labels = scales::comma) +
+  theme_economist() +
+  theme(axis.text.x = element_text(vjust = 1, family = "mono", face = "bold", size = 10),
+        axis.title.y = element_text(vjust = 3.2),
+        axis.text.y = element_text(size = 9, family = "mono"),
+        axis.title.x = element_text(vjust = -1),
+        title = element_text(family = "mono", face = "bold"),
+        plot.title = element_text(hjust = 0.4),
+        legend.text = element_text(size = 8, family = "mono", face = "bold"),
+        strip.text = element_text(size = 9, family = "mono", face = "bold"))
+```
+
+As you can see here, there's some noticeable trends. The euthanizations have gone way up for wildlife! Looking into this further, I discovered Queensland was responsible for this trend. They have steadily been increasing euthanizations of wildlife overtime, while for other regions this hasn't been the case at all. Why this is the case is something I recommend the RSCPA look into more.
+
+Another thing to note is the steady decline in euthanizations for everything else. For Other Animals as well as for cats, there is a trend of euthanizations going down and rehoming going up. This is good news and means that the RSPCA is accomplishing it's goal.
+
+For Dogs, the trend is not so clear, it appears rehoming is on the decline; however euthanizations have fallen dramatically and this is definitely a good sign.
+
+
+
+## Are there any major differences between the way different States of Australia deal with animals?
+
+Next, I broke things down by region and looked at the rates of reclaim. For the sake of simplicity, we'll look at three of Australia's regions.
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(region, outcome, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  filter(outcome == "Reclaimed") %>% 
+  filter(region == "QLD" | region == "VIC" | region == "NT") %>% 
+  ggplot(aes(x = year, y = total_injuries, color = outcome)) +
+  geom_line(colour = "blue") +
+  facet_wrap(~region, scales = "free_y") +
+  labs(x = "Date", y = "Number of Cases", color = "Outcome", title = "Animals Reclaimed by Territory") +
+  scale_fill_discrete(name = "Complaint Type") +
+  scale_y_continuous(labels = scales::comma) +
+  theme_economist() +
+  theme(axis.text.x = element_text(vjust = 1, family = "mono", face = "bold", size = 10),
+        axis.title.y = element_text(vjust = 3.2),
+        axis.text.y = element_text(size = 9, family = "mono"),
+        axis.title.x = element_text(vjust = -1),
+        title = element_text(family = "mono", face = "bold", vjust = 2.4),
+        plot.title = element_text(hjust = 0.4),
+        legend.text = element_text(size = 8, family = "mono", face = "bold"),
+        strip.text = element_text(size = 12, family = "mono", face = "bold"))
+```
+So some interesting things here. The Northern Territory has been fairly stable with low levels of reclaim for decades, and recently has had a huge spike with a massive increase in number of reclaims. Queensland has been steadily climbing, and this speaks well to the RSPCA's efforts. Victoria, has had quite a bit of variability, but as you can see has been on the decline since about 2009. This suggests to me that more initiatives and resources might need to be spent on Victoria.
+
+
+## Are there any anomalies in the data?
+
+There are a few actually, but there is one I will focus on.
+
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(region, animal_type, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  filter(animal_type == "Wildlife") %>% 
+  ggplot(aes(x = year, y = total_injuries, color = region)) +
+  geom_line() +
+  facet_wrap(~animal_type, scales = "free_y") +
+  labs(x = "Date", y = "Number of Cases", color = "Region", title = "Wildlife Cases by Territory") +
+  scale_fill_discrete(name = "Complaint Type") +
+  scale_y_continuous(labels = scales::comma) +
+  theme_economist() +
+  theme(axis.text.x = element_text(vjust = 1, family = "mono", face = "bold", size = 10),
+        axis.title.y = element_text(vjust = 3.2),
+        axis.text.y = element_text(size = 9, family = "mono"),
+        axis.title.x = element_text(vjust = -1),
+        title = element_text(family = "mono", face = "bold"),
+        plot.title = element_text(hjust = 0.4),
+        legend.text = element_text(size = 8, f amily = "mono", face = "bold"),
+        legend.title = element_blank(),
+        strip.text = element_blank())
+```
+
+As you can see Western Australia had a huge spike in wildlife in 2006. Given that Western Australia normally accounts for a much smaller number of cases, this is quite stark. Upon further investigation, I discovered that in March 2006, cyclone Emma (a tropical storm) swept over Western Australia. Though a weak storm, the rainfall caused mass flooding. It's very possible that this is the reason for the proportionally large spike in wildlife cases. This also lead to a spike in euthanasia, as unfortunately for wild animals this is often a necessary course of action.
+
+
+## Business Intelligence – using the insights you have found, can you predict how this might look for the upcoming year?
+
+
 
 
 

@@ -393,49 +393,522 @@ animal_complaints %>%
 
 
 
-### 2. a) Is there are a trend in injuries By Region, and is there different peaks of times of year per region?
+### 2. a) Are there any major differences between regions?
+
+b) How do the animal outcomes differ over time?
+
+c) Are there any noticeable anomalies in the data?
+
 
 It's impossible to say if there's different peaks of times of yer per region, as we only have the data for the year as a whole. Unless we look at Suburb rather than region, and break this down by time. However, I think it'd be good to use the general Autralia (nationwide) data.
 
 
-
-
-
-
-
-
-
-```{r}
+Proportions overall by region and by outcome. We can see that in general, regions have pretty similar proportions across all outcomes. This won't be the case for every year though and trends over time, that's the more interesting stuff.
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
 animal_outcomes %>% 
-  group_by(region) %>% 
   ggplot(aes(x = region, y = number_of_occurences, fill = outcome, col = outcome)) +
   geom_col(position = "fill")
 ```
 
-
-```{r}
+This is the same thing as before, but for animal type. Same as before, not much discernible difference between the regions.
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
 animal_outcomes %>% 
-  group_by(region, year) %>% 
-  summarise(count = n()) %>% 
-  ggplot(aes(x = year, y = count)) +
-  #geom_point() +
-  geom_line() +
-  facet_wrap(~ region)
+  ggplot(aes(x = region, y = number_of_occurences, fill = animal_type, col = animal_type)) +
+  geom_col(position = "fill")
 ```
 
 
 
 
+Next is just the sum ocurrences. We can see the regions that have way more animals injured/taken in by the RSPCA. This could be a population thing, maybe these regions just have more wildlife populations etc., or even a bigger RSPCA presence leading to more cases.
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
+animal_outcomes %>% 
+  group_by(region) %>% 
+  summarise(sum_of_occurences = sum(number_of_occurences, na.rm = TRUE)) %>% 
+  ggplot(aes(x = region, y = sum_of_occurences)) +
+  geom_col(col = "blue", fill = "blue")
+```
+
+
+
+So, this is the data across time (from 1999-2018), with time on the x-axis and number of occurences on the y. Faceted into graphs based on outcome, with the coloured lines representing different regions.
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(region, outcome, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  ggplot(aes(x = year, y = total_injuries, color = region)) +
+  geom_line() +
+  facet_wrap(~outcome, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Region")
+
+```
+
+What can we say about this? Well, QLD has had their transfers go way up since about 2009, and in general looks like an increase in cases for them. NSW had a big spike of Currently In Care around 2004. Euthanisation in general seems to be falling out of favour (which is actually true, the RSPCA tries to do it less for various reasons, one actually being the mental health of the staff and another being lots of euthanisations leads to a negative perception of animal shelters)
+
+
+
+
+Exact same as before, but faceted on animal type rather than outcome.
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(region, animal_type, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  ggplot(aes(x = year, y = total_injuries, color = region)) +
+  geom_line() +
+  facet_wrap(~animal_type, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Region")
+```
+
+QLD has had a lot more wildlife cases, steadily climbing since about 2006. NSW has had a big drop in cats recently. Dogs too. Horses have gone up every region it looks like. NT has had a huge spike in cats from 2015-2016.
 
 
 
 
 
+This one has the same x and y, but is faceted based on region. The coloured lines now represent the outcomes.
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(region, outcome, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  ggplot(aes(x = year, y = total_injuries, color = outcome)) +
+  geom_line() +
+  facet_wrap(~region, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Outcome")
+```
+
+WA in 2006 had a big increase in euthanizations. VIC has had theirs steadily decreasing over time, this is reflected also in NSW, TAS and ACT.
 
 
 
 
 
+Same as before with faceting based on region, but now the coloured lines represent the type of animal the RSPCA is dealing with.
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(region, animal_type, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  ggplot(aes(x = year, y = total_injuries, color = animal_type)) +
+  geom_line() +
+  facet_wrap(~region, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Animal Type")
+```
+
+NT has had a big spike in dogs and cats in recent years. WA had a big spike in wildlife in 2005, corresponding with their spike in euthanizations - common sense and domain knowledge tell us these are likely highly correlated. VIC's numbers in general seem to be decreasing over time.
+
+
+
+
+Looking now specifically at euthanizations, faceted by region with the lines representing euthanizations.
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(region, outcome, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  filter(outcome == "Euthanized") %>% 
+  ggplot(aes(x = year, y = total_injuries, color = outcome)) +
+  geom_line() +
+  facet_wrap(~region, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Outcome")
+```
+
+
+
+Now we no longer facet by region.
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(outcome, animal_type, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  ggplot(aes(x = year, y = total_injuries, color = animal_type)) +
+  geom_line() +
+  facet_wrap(~outcome, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Animal Type")
+
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(outcome, animal_type, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  ggplot(aes(x = year, y = total_injuries, color = outcome)) +
+  geom_line() +
+  facet_wrap(~animal_type, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Outcome")
+```
+
+
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
+# looking at only euthanasia
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(outcome, animal_type, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  filter(outcome == "Euthanized") %>% 
+  ggplot(aes(x = year, y = total_injuries, color = outcome)) +
+  geom_line() +
+  facet_wrap(~animal_type, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Outcome")
+
+# looking at only rehomed
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(outcome, animal_type, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  filter(outcome == "Rehomed") %>% 
+  ggplot(aes(x = year, y = total_injuries, color = outcome)) +
+  geom_line() +
+  facet_wrap(~animal_type, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Outcome")
+```
+
+OK so cats and dogs have way less euthanisations. Wildlife has gone way up! Horses are too small a sample to be meaningful. Other animals have spiked then decreased.
+
+
+
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
+# looking at both rehomed and euthanized
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(outcome, animal_type, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  filter(outcome == "Rehomed" | outcome == "Euthanized") %>% 
+  ggplot(aes(x = year, y = total_injuries, color = outcome)) +
+  geom_line() +
+  facet_wrap(~animal_type, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Outcome")
+```
+
+Looking at rehomes to euthanisations, we see cats have an upward trend with less euthanisations and more rehomes, with dogs, both have gone down. Perhaps with dogs there's a confounding factor. In fact, it seems like the RSPCA is dealing with less dogs in general.
+
+
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
+# looking at both rehomed, reclaimed and euthanized
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(outcome, animal_type, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  filter(outcome == "Rehomed" | outcome == "Euthanized" | outcome == "Reclaimed") %>%
+  ggplot(aes(x = year, y = total_injuries, color = outcome)) +
+  geom_line() +
+  facet_wrap(~animal_type, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Outcome")
+```
+
+
+```{r, echo=FALSE, message=FALSE, error=FALSE, eval=TRUE}
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(outcome, animal_type, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  filter(animal_type == "Wildlife") %>% 
+  ggplot(aes(x = year, y = total_injuries, color = outcome)) +
+  geom_line() +
+  labs(x = "Date", y = "Number of injuries", color = "Outcome", title = "Wildlife")
+
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(outcome, animal_type, year, region) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  filter(animal_type == "Wildlife" & outcome == "Euthanized") %>% 
+  ggplot(aes(x = year, y = total_injuries, color = outcome)) +
+  geom_line() +
+  facet_wrap(~region, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Outcome", title = "Wildlife")
+```
+
+Euthanizations for wildlife have overall gone up. Queensland is skewing the data, they've euthanized way more! Is this necessarily a bad thing? It could indicate a bigger RSPCA presence in the area, and more vigilance in regards to controlling the wildlife. 
+
+
+
+
+General thoughts:
+
+big change in 2006 for WA; cyclone Emma March 2006 could've released many wild animals leading to high euthanizations (this for 2.c)
+different territories have different approaches; 
+
+
+
+### 4. Business Intelligence – using the insights you have found, can you predict how this might look for the upcoming year?
+
+
+```{r}
+# Load required packages
+library(forecast)
+
+# Create a time series object
+ts_data <- ts(animal_outcomes$outcome, start = c(1999), frequency = 1)
+
+# Fit an ARIMA model
+arima_model <- auto.arima(ts_data)
+
+# Make forecasts for the next 5 years
+forecast_values <- forecast(arima_model, h = 5)
+
+# Plot the forecasts
+autoplot(forecast_values)
+
+```
+
+
+```{r}
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(region, outcome, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  filter(outcome == "Euthanized") %>% 
+  ggplot(aes(x = year, y = total_injuries, color = outcome)) +
+  geom_line() +
+  facet_wrap(~region, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Outcome")
+```
+
+
+```{r}
+# Load required packages
+library(dplyr)
+library(ggplot2)
+
+# Create a new data frame with grouped and summarized data
+grouped_data <- animal_outcomes %>%
+  drop_na() %>%
+  group_by(region, outcome, year) %>%
+  summarize(total_occurrences = sum(number_of_occurences))
+
+# Filter the data to only include euthanized outcomes
+euthanized_data <- grouped_data %>%
+  filter(outcome == "Euthanized")
+
+# Create a line plot of total euthanized occurrences by year and region
+ggplot(euthanized_data, aes(x = year, y = total_occurrences, color = region)) +
+  geom_line() +
+  labs(x = "Year", y = "Total Euthanized Occurrences", color = "Region") +
+  facet_wrap(~region, scales = "free_y")
+
+```
+
+```{r}
+# Load required packages
+library(forecast)
+
+# Convert the data to a time series object
+ts_data <- ts(euthanized_data$total_occurrences, start = c(1999, 1), frequency = 1)
+
+# Fit an ARIMA model to the time series data
+arima_model <- auto.arima(ts_data)
+
+# Make forecasts for the next 5 years
+forecast_values <- forecast(arima_model, h = 5)
+
+# Plot the forecasted values and the 95% confidence intervals
+plot(forecast_values, xlab = "Year", ylab = "Total Euthanized Occurrences", main = "ARIMA Forecast", xlim = c(1999, 2023))
+
+```
+
+
+### Creating a model for Townsville Total cases:
+
+```{r}
+library(ggthemes)
+
+animal_complaints %>% 
+  group_by(date_received) %>% 
+  summarise(count = n()) %>% 
+  ggplot() +
+  aes(x = date_received, y = count ) +
+  geom_line(col = "blue") +
+  scale_x_date(date_breaks = "6 months", date_labels = "%b %y") + 
+  labs(title = "Townsville Complaint Calls",
+       x = "Time",
+       y = "Number of Calls") +
+  theme_economist() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, family = "mono", face = "bold", size = 7),
+        axis.title.y = element_text(vjust = 3.2),
+        title = element_text(family = "mono", face = "bold"),
+        plot.title = element_text(hjust = 0.4)) +
+        annotate("rect", xmin = as.Date("2014-06-01"), xmax = as.Date("2014-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2015-06-01"), xmax = as.Date("2015-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2016-06-01"), xmax = as.Date("2016-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2017-06-01"), xmax = as.Date("2017-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2018-06-01"), xmax = as.Date("2018-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2019-06-01"), xmax = as.Date("2019-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3)
+```
+
+this sorta works:
+```{r}
+library(tidyverse)
+library(forecast)
+library(ggthemes)
+
+
+# Create a time series from the data
+animal_complaints_ts <- animal_complaints %>%
+  group_by(date_received) %>%
+  summarise(count = n()) %>%
+  ts(frequency = 365)
+
+# Forecasting for next 3 years
+animal_complaints_fc <- forecast(animal_complaints_ts, h = 3*365)
+
+# Plot the original data and forecast
+autoplot(animal_complaints_fc, 
+         main = "Townsville Complaint Calls Forecast", 
+         xlab = "Time",
+         ylab = "Number of Calls") + 
+  autolayer(animal_complaints_ts, 
+            series = "Original Data",
+            col = "blue") +
+  scale_x_date(date_breaks = "6 months", date_labels = "%b %y") +
+  theme_economist() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, family = "mono", face = "bold", size = 7),
+        axis.title.y = element_text(vjust = 3.2),
+        title = element_text(family = "mono", face = "bold"),
+        plot.title = element_text(hjust = 0.4)) +
+  annotate("rect", xmin = as.Date("2014-06-01"), xmax = as.Date("2014-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+  annotate("rect", xmin = as.Date("2015-06-01"), xmax = as.Date("2015-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+  annotate("rect", xmin = as.Date("2016-06-01"), xmax = as.Date("2016-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+  annotate("rect", xmin = as.Date("2017-06-01"), xmax = as.Date("2017-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+  annotate("rect", xmin = as.Date("2018-06-01"), xmax = as.Date("2018-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+  annotate("rect", xmin = as.Date("2019-06-01"), xmax = as.Date("2019-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3)
+
+```
+
+```{r}
+library(forecast)
+library(ggthemes)
+
+# Convert the date_received column to a Date type
+
+# Aggregate the data to get the count of complaints per day
+animal_complaints <- animal_complaints %>% 
+  group_by(date_received) %>% 
+  summarise(count = n()) %>% 
+  ungroup()
+
+# Convert the data to a time series object
+ts_data <- ts(animal_complaints$count, frequency = 365)
+
+# Decompose the time series using STL
+ts_stl <- stl(ts_data, s.window = "periodic")
+
+# Plot the original time series and its components
+autoplot(ts_stl) +
+  labs(title = "STL Decomposition of Animal Complaints",
+       x = "Year",
+       y = "Count of Complaints") +
+  theme_economist()
+
+# Forecast the time series using the ARIMA model
+arima_model <- auto.arima(ts_data)
+ts_forecast <- forecast(arima_model, h = 365*3)
+
+# Plot the original time series and its forecast
+ggplot() +
+  aes(x = animal_complaints$date_received, y = animal_complaints$count ) +
+  geom_line(col = "blue") +
+  geom_line(data = ts_forecast$mean, aes(x = as.Date(time(ts_forecast$mean)), y = ts_forecast$mean), col = "red") +
+  geom_ribbon(data = ts_forecast, aes(x = as.Date(time(ts_forecast$mean)), ymin = ts_forecast$lower[,2], ymax = ts_forecast$upper[,2]), fill = "grey", alpha = 0.3) +
+  scale_x_date(date_breaks = "6 months", date_labels = "%b %y") + 
+  labs(title = "Townsville Complaint Calls",
+       x = "Time",
+       y = "Number of Calls") +
+  theme_economist() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, family = "mono", face = "bold", size = 7),
+        axis.title.y = element_text(vjust = 3.2),
+        title = element_text(family = "mono", face = "bold"),
+        plot.title = element_text(hjust = 0.4)) +
+  annotate("rect", xmin = as.Date("2014-06-01"), xmax = as.Date("2014-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+  annotate("rect", xmin = as.Date("2015-06-01"), xmax = as.Date("2015-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+  annotate("rect", xmin = as.Date("2016-06-01"), xmax = as.Date("2016-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3
+
+```
+```{r}
+# Create a time series with a frequency of 12 (monthly data)
+ts_data <- ts(animal_complaints$count, frequency = 12)
+
+# Fit a seasonal ARIMA model to the time series
+fit <- auto.arima(ts_data)
+
+# Forecast the next 36 periods (3 years)
+forecast_values <- forecast(fit, h = 36)
+
+# Plot the forecasted values
+plot(forecast_values)
+
+```
+
+```{r}
+ts_data <- ts(data, start = c(2014, 1), frequency = 12)
+interval <- time(ts_data)[2] - time(ts_data)[1]
+
+fit <- auto.arima(ts_data, seasonal = TRUE)
+forecast_values <- forecast(fit, h = 36, xreg = regressors, lambda = "auto", 
+                            level = c(80, 95), fan = TRUE, 
+                            plot = FALSE, robust = FALSE, 
+                            na.action = na.pass, 
+                            allowmean = FALSE, 
+                            id.method = c("arima", "ets", "bats", "tbats"), 
+                            newdata = NULL, 
+                            newxreg = NULL, 
+                            lambda.search = "backward", 
+                            nbest = 1, 
+                            keep.fitted = FALSE, 
+                            parallel = FALSE, 
+                            num.cores = 2, 
+                            save.forecast.models = FALSE, 
+                            ...) 
+
+
+```
+
+```{r}
+library(forecast)
+
+ts_data <- animal_complaints %>% 
+  group_by(date_received) %>% 
+  summarise(count = n()) %>% 
+  as.data.frame() %>% 
+  as.matrix.data.frame()
+
+ts_data <- ts(ts_data, start = c(2014,1), frequency = 12)
+
+fit <- auto.arima(ts_data)
+
+forecast_values <- forecast(fit, h = 36)
+
+```
+
+```{r}
+library(tidyverse)
+
+ts_data <- animal_complaints %>%
+  select(date_received) %>%
+  pull()
+
+fit <- auto.arima(ts_data)
+
+forecast_values <- forecast(fit, h = 36)
+```
+
+
+### Next attempt for a model
+
+I want to predict the total cases for Australia. We won't break it down by region
 
 
 

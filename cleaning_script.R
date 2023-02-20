@@ -99,4 +99,6 @@ animal_outcomes <- read_csv("data/animal_outcomes.csv") %>%
 
 animal_outcomes <- animal_outcomes %>% 
   pivot_longer(act:wa, names_to = "region", values_to = "number_of_occurences") %>% 
-  mutate(year = ymd(paste0(year, "-01-01")))
+  mutate(year = ymd(paste0(year, "-01-01"))) %>% 
+  mutate(outcome = ifelse(outcome == "In Stock" & year <= "2008-01-01", "Currently In Care", outcome)) %>% 
+  mutate(region = str_to_upper(region))
