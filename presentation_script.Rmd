@@ -364,7 +364,7 @@ animal_outcomes %>%
   summarize(total_injuries = sum(number_of_occurences)) %>%
   ungroup() %>% 
   filter(outcome == "Reclaimed") %>% 
-  filter(region == "QLD" | region == "VIC" | region == "NT") %>% 
+  filter(region == "QLD" | region == "VIC" | region == "TAS") %>% 
   ggplot(aes(x = year, y = total_injuries, color = outcome)) +
   geom_line(colour = "blue") +
   facet_wrap(~region, scales = "free_y") +
@@ -381,7 +381,8 @@ animal_outcomes %>%
         legend.text = element_text(size = 8, family = "mono", face = "bold"),
         strip.text = element_text(size = 12, family = "mono", face = "bold"))
 ```
-So some interesting things here. The Northern Territory has been fairly stable with low levels of reclaim for decades, and recently has had a huge spike with a massive increase in number of reclaims. Queensland has been steadily climbing, and this speaks well to the RSPCA's efforts. Victoria, has had quite a bit of variability, but as you can see has been on the decline since about 2009. This suggests to me that more initiatives and resources might need to be spent on Victoria.
+So some interesting things here. Queensland has been steadily climbing, and this speaks well to the RSPCA's efforts. Victoria, has had quite a bit of variability, but as you can see has been on the decline since about 2009. And Tasmania has had a steep decline since about 2016.
+This suggests to me that more initiatives and resources might need to be spent on Victoria.
 
 
 ## Are there any anomalies in the data?
@@ -419,6 +420,46 @@ As you can see Western Australia had a huge spike in wildlife in 2006. Given tha
 ## Business Intelligence – using the insights you have found, can you predict how this might look for the upcoming year?
 
 
+```{r}
+forecast_1 %>%
+  filter(.model == "arima") %>% 
+  autoplot(animal_complaints_tsibble, level = 95) +
+  scale_x_yearmonth(date_breaks = "6 months", date_labels = "%b %y") + 
+  labs(title = "Townsville Complaint Calls with Prediction",
+       x = "Time",
+       y = "Number of Calls") +
+  theme_economist() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, family = "mono", face = "bold", size = 7),
+        #axis.ticks.x = 
+        axis.title.y = element_text(vjust = 3.2),
+        title = element_text(family = "mono", face = "bold"),
+        plot.title = element_text(hjust = 0.4),
+        legend.title = element_blank(),
+        legend.position = "none") +
+        annotate("rect", xmin = as.Date("2014-06-01"), xmax = as.Date("2014-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2015-06-01"), xmax = as.Date("2015-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2016-06-01"), xmax = as.Date("2016-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2017-06-01"), xmax = as.Date("2017-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2018-06-01"), xmax = as.Date("2018-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2019-06-01"), xmax = as.Date("2019-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2020-06-01"), xmax = as.Date("2020-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2021-06-01"), xmax = as.Date("2021-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2022-06-01"), xmax = as.Date("2022-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2023-06-01"), xmax = as.Date("2023-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3)
+```
 
+
+So I was also tasked with creating a model, to predict how things might look for the next few years. I focused specifically on the Townsville data, as this was most suitable for forecasting. I used something called the "ARIMA" model, the inner workings of which are quite complicated, but basically it predicts the future based on the past, and is quite good when it comes to seasonal data like I have here. The blue line is the prediction, and the light blue area you see highlighted around it is the confidence interval. Think of this like a margin of error, and it basically means that 95% of the time, our model will predict results in this area.
+
+This model suggests that roughly the same pattern will continue as before, with fairly steady volume of calls and high peaks in Winter. But bear in mind this model is quite limited and shouldn't be taken as fact; for example, it doesn't take into account natural disasters and other events which could cause an increase in complaint calls.
+
+
+## Conclusion
+
+The RSPCA and local councils have got good, quality rich data that have shown some interesting trends over time broken down by region and areas.
+
+My initial analysis has confirmed some interesting trends, some of which indicate good progress towards the RSPCA's stated goals; for example, euthanizations trending downwards in certain species.
+
+Further investigation with the RSPCA would allow more detailed analysis in the areas that they're interested in, and allow them to make better informed business decisions.
 
 

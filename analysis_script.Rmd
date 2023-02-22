@@ -103,8 +103,7 @@ Other than declining a little over 2016, the number of calls sees a slow but ste
 
 
 
-### 3.
-b) Is there a particular animal being called about the most?
+### 3.b) Is there a particular animal being called about the most?
 
 ```{r}
 animal_complaints %>% 
@@ -153,8 +152,7 @@ To answer the question however, it's mainly dogs and cats, and especially dogs. 
 (Attack refers to the initial description of the complaint)
 
 
-### 3. 
-c) Do particular suburbs have different type of complaint calls? Do they call about different animals?
+### 3. c) Do particular suburbs have different type of complaint calls? Do they call about different animals?
 
 OK, so this one is difficult simply for the fact there is a huge amount of suburbs.
 ```{r}
@@ -646,23 +644,8 @@ different territories have different approaches;
 ### 4. Business Intelligence – using the insights you have found, can you predict how this might look for the upcoming year?
 
 
-```{r}
-# Load required packages
-library(forecast)
 
-# Create a time series object
-ts_data <- ts(animal_outcomes$outcome, start = c(1999), frequency = 1)
 
-# Fit an ARIMA model
-arima_model <- auto.arima(ts_data)
-
-# Make forecasts for the next 5 years
-forecast_values <- forecast(arima_model, h = 5)
-
-# Plot the forecasts
-autoplot(forecast_values)
-
-```
 
 
 ```{r}
@@ -679,231 +662,11 @@ animal_outcomes %>%
 ```
 
 
-```{r}
-# Load required packages
-library(dplyr)
-library(ggplot2)
-
-# Create a new data frame with grouped and summarized data
-grouped_data <- animal_outcomes %>%
-  drop_na() %>%
-  group_by(region, outcome, year) %>%
-  summarize(total_occurrences = sum(number_of_occurences))
-
-# Filter the data to only include euthanized outcomes
-euthanized_data <- grouped_data %>%
-  filter(outcome == "Euthanized")
-
-# Create a line plot of total euthanized occurrences by year and region
-ggplot(euthanized_data, aes(x = year, y = total_occurrences, color = region)) +
-  geom_line() +
-  labs(x = "Year", y = "Total Euthanized Occurrences", color = "Region") +
-  facet_wrap(~region, scales = "free_y")
-
-```
-
-```{r}
-# Load required packages
-library(forecast)
-
-# Convert the data to a time series object
-ts_data <- ts(euthanized_data$total_occurrences, start = c(1999, 1), frequency = 1)
-
-# Fit an ARIMA model to the time series data
-arima_model <- auto.arima(ts_data)
-
-# Make forecasts for the next 5 years
-forecast_values <- forecast(arima_model, h = 5)
-
-# Plot the forecasted values and the 95% confidence intervals
-plot(forecast_values, xlab = "Year", ylab = "Total Euthanized Occurrences", main = "ARIMA Forecast", xlim = c(1999, 2023))
-
-```
 
 
-### Creating a model for Townsville Total cases:
-
-```{r}
-library(ggthemes)
-
-animal_complaints %>% 
-  group_by(date_received) %>% 
-  summarise(count = n()) %>% 
-  ggplot() +
-  aes(x = date_received, y = count ) +
-  geom_line(col = "blue") +
-  scale_x_date(date_breaks = "6 months", date_labels = "%b %y") + 
-  labs(title = "Townsville Complaint Calls",
-       x = "Time",
-       y = "Number of Calls") +
-  theme_economist() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, family = "mono", face = "bold", size = 7),
-        axis.title.y = element_text(vjust = 3.2),
-        title = element_text(family = "mono", face = "bold"),
-        plot.title = element_text(hjust = 0.4)) +
-        annotate("rect", xmin = as.Date("2014-06-01"), xmax = as.Date("2014-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
-        annotate("rect", xmin = as.Date("2015-06-01"), xmax = as.Date("2015-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
-        annotate("rect", xmin = as.Date("2016-06-01"), xmax = as.Date("2016-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
-        annotate("rect", xmin = as.Date("2017-06-01"), xmax = as.Date("2017-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
-        annotate("rect", xmin = as.Date("2018-06-01"), xmax = as.Date("2018-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
-        annotate("rect", xmin = as.Date("2019-06-01"), xmax = as.Date("2019-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3)
-```
-
-this sorta works:
-```{r}
-library(tidyverse)
-library(forecast)
-library(ggthemes)
 
 
-# Create a time series from the data
-animal_complaints_ts <- animal_complaints %>%
-  group_by(date_received) %>%
-  summarise(count = n()) %>%
-  ts(frequency = 365)
 
-# Forecasting for next 3 years
-animal_complaints_fc <- forecast(animal_complaints_ts, h = 3*365)
-
-# Plot the original data and forecast
-autoplot(animal_complaints_fc, 
-         main = "Townsville Complaint Calls Forecast", 
-         xlab = "Time",
-         ylab = "Number of Calls") + 
-  autolayer(animal_complaints_ts, 
-            series = "Original Data",
-            col = "blue") +
-  scale_x_date(date_breaks = "6 months", date_labels = "%b %y") +
-  theme_economist() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, family = "mono", face = "bold", size = 7),
-        axis.title.y = element_text(vjust = 3.2),
-        title = element_text(family = "mono", face = "bold"),
-        plot.title = element_text(hjust = 0.4)) +
-  annotate("rect", xmin = as.Date("2014-06-01"), xmax = as.Date("2014-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
-  annotate("rect", xmin = as.Date("2015-06-01"), xmax = as.Date("2015-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
-  annotate("rect", xmin = as.Date("2016-06-01"), xmax = as.Date("2016-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
-  annotate("rect", xmin = as.Date("2017-06-01"), xmax = as.Date("2017-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
-  annotate("rect", xmin = as.Date("2018-06-01"), xmax = as.Date("2018-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
-  annotate("rect", xmin = as.Date("2019-06-01"), xmax = as.Date("2019-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3)
-
-```
-
-```{r}
-library(forecast)
-library(ggthemes)
-
-# Convert the date_received column to a Date type
-
-# Aggregate the data to get the count of complaints per day
-animal_complaints <- animal_complaints %>% 
-  group_by(date_received) %>% 
-  summarise(count = n()) %>% 
-  ungroup()
-
-# Convert the data to a time series object
-ts_data <- ts(animal_complaints$count, frequency = 365)
-
-# Decompose the time series using STL
-ts_stl <- stl(ts_data, s.window = "periodic")
-
-# Plot the original time series and its components
-autoplot(ts_stl) +
-  labs(title = "STL Decomposition of Animal Complaints",
-       x = "Year",
-       y = "Count of Complaints") +
-  theme_economist()
-
-# Forecast the time series using the ARIMA model
-arima_model <- auto.arima(ts_data)
-ts_forecast <- forecast(arima_model, h = 365*3)
-
-# Plot the original time series and its forecast
-ggplot() +
-  aes(x = animal_complaints$date_received, y = animal_complaints$count ) +
-  geom_line(col = "blue") +
-  geom_line(data = ts_forecast$mean, aes(x = as.Date(time(ts_forecast$mean)), y = ts_forecast$mean), col = "red") +
-  geom_ribbon(data = ts_forecast, aes(x = as.Date(time(ts_forecast$mean)), ymin = ts_forecast$lower[,2], ymax = ts_forecast$upper[,2]), fill = "grey", alpha = 0.3) +
-  scale_x_date(date_breaks = "6 months", date_labels = "%b %y") + 
-  labs(title = "Townsville Complaint Calls",
-       x = "Time",
-       y = "Number of Calls") +
-  theme_economist() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, family = "mono", face = "bold", size = 7),
-        axis.title.y = element_text(vjust = 3.2),
-        title = element_text(family = "mono", face = "bold"),
-        plot.title = element_text(hjust = 0.4)) +
-  annotate("rect", xmin = as.Date("2014-06-01"), xmax = as.Date("2014-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
-  annotate("rect", xmin = as.Date("2015-06-01"), xmax = as.Date("2015-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
-  annotate("rect", xmin = as.Date("2016-06-01"), xmax = as.Date("2016-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3
-
-```
-```{r}
-# Create a time series with a frequency of 12 (monthly data)
-ts_data <- ts(animal_complaints$count, frequency = 12)
-
-# Fit a seasonal ARIMA model to the time series
-fit <- auto.arima(ts_data)
-
-# Forecast the next 36 periods (3 years)
-forecast_values <- forecast(fit, h = 36)
-
-# Plot the forecasted values
-plot(forecast_values)
-
-```
-
-```{r}
-ts_data <- ts(data, start = c(2014, 1), frequency = 12)
-interval <- time(ts_data)[2] - time(ts_data)[1]
-
-fit <- auto.arima(ts_data, seasonal = TRUE)
-forecast_values <- forecast(fit, h = 36, xreg = regressors, lambda = "auto", 
-                            level = c(80, 95), fan = TRUE, 
-                            plot = FALSE, robust = FALSE, 
-                            na.action = na.pass, 
-                            allowmean = FALSE, 
-                            id.method = c("arima", "ets", "bats", "tbats"), 
-                            newdata = NULL, 
-                            newxreg = NULL, 
-                            lambda.search = "backward", 
-                            nbest = 1, 
-                            keep.fitted = FALSE, 
-                            parallel = FALSE, 
-                            num.cores = 2, 
-                            save.forecast.models = FALSE, 
-                            ...) 
-
-
-```
-
-```{r}
-library(forecast)
-
-ts_data <- animal_complaints %>% 
-  group_by(date_received) %>% 
-  summarise(count = n()) %>% 
-  as.data.frame() %>% 
-  as.matrix.data.frame()
-
-ts_data <- ts(ts_data, start = c(2014,1), frequency = 12)
-
-fit <- auto.arima(ts_data)
-
-forecast_values <- forecast(fit, h = 36)
-
-```
-
-```{r}
-library(tidyverse)
-
-ts_data <- animal_complaints %>%
-  select(date_received) %>%
-  pull()
-
-fit <- auto.arima(ts_data)
-
-forecast_values <- forecast(fit, h = 36)
-```
 
 
 ### Next attempt for a model
@@ -911,11 +674,495 @@ forecast_values <- forecast(fit, h = 36)
 I want to predict the total cases for Australia. We won't break it down by region. So first, let's get our summary statistics and put it in a new variable:
 
 ```{r}
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(outcome, animal_type, year, region) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  filter(animal_type == "Cats" & outcome == "Euthanized") %>% 
+  ggplot(aes(x = year, y = total_injuries, color = outcome)) +
+  geom_line() +
+  facet_wrap(~region, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Outcome", title = "Cats")
+```
 
+
+```{r}
+animal_outcomes %>% 
+  drop_na() %>% 
+  group_by(outcome, animal_type, year) %>%
+  summarize(total_injuries = sum(number_of_occurences)) %>%
+  ungroup() %>% 
+  filter(animal_type == "Cats" & outcome == "Euthanized") %>% 
+  ggplot(aes(x = year, y = total_injuries, color = outcome)) +
+  geom_line() +
+  #facet_wrap(~region, scales = "free_y") +
+  labs(x = "Date", y = "Number of injuries", color = "Outcome", title = "Cats")
+```
+
+
+```{r}
+wildlife_tsbl <- animal_outcomes %>% 
+  drop_na() %>% 
+  filter(animal_type == "Cats" & outcome == "Euthanized") %>% 
+  group_by(year) %>% 
+  summarise(total_euth = sum(number_of_occurences)) %>% 
+  ungroup() %>% 
+  as_tsibble(key = year, index = total_euth)
+```
+
+```{r}
+library(fable)
+
+# Fit ARIMA model
+wildlife_arima <- wildlife_tsbl %>% 
+  model(total_euth = ARIMA(total_euth))
+```
+
+```{r}
+# Generate forecasts
+
+# Convert ARIMA object to a tsibble object
+wildlife_tsbl <- as_tsibble(wildlife_arima, key = total_euth, index = year)
+
+# Generate forecasts
+wildlife_forecast <- wildlife_tsbl %>%
+  model(ARIMA(total_euth)) %>% 
+  forecast(h = 36)
 ```
 
 
 
 
 
+```{r}
+library(tidyverse)
+library(fable)
+library(tsibble)
+library(tsibbledata)
+# We also need to use the "urca" package to be able to use the ARIMA model
+library(urca)
+```
+
+
+```{r}
+
+
+wildlife_tsbl <- animal_outcomes %>% 
+  drop_na() %>% 
+  filter(animal_type == "Cats" & outcome == "Euthanized") %>% 
+  group_by(year) %>% 
+  summarise(total_euth = sum(number_of_occurences)) %>% 
+  ungroup() %>%
+  mutate(date = year %>% as.Date(paste0("-01-01"))) %>% 
+  as_tsibble(key = year, index = date)
+
+wildlife_arima <- wildlife_tsbl %>% 
+  model(ARIMA(total_euth))
+
+wildlife_forecast <- wildlife_arima %>% 
+  forecast(h = 36)
+
+wildlife_forecast
+
+
+```
+
+```{r}
+wildlife_forecast %>% 
+  autoplot() + 
+  scale_y_continuous(limits = c(0, max(wildlife_tsbl$total_euth, na.rm = TRUE) * 1.2))
+
+```
+
+```{r}
+wildlife_fcst <- wildlife_forecast %>% 
+  as_tibble() %>% 
+  select(year, .mean) %>% 
+  rename(total_euth = .mean)
+
+wildlife_tsbl_fcst <- wildlife_tsbl %>% 
+  bind_rows(wildlife_fcst, .id = "source") %>% 
+  ggplot(aes(x = year, y = total_euth, colour = source)) +
+  geom_line() +
+  labs(title = "Total Euthanized Cats in Austin Animal Center",
+       subtitle = "Historical data and forecasts",
+       y = "Number of cats euthanized",
+       color = "Source") +
+  theme_minimal()
+
+```
+
+```{r}
+wildlife_fcst_tsbl <- wildlife_fcst %>% 
+  as_tsibble(key = year, index = total_euth) %>% 
+  select(year, total_euth, .mean)
+
+ggplot(wildlife_fcst_tsbl, aes(x = year, y = total_euth)) +
+  geom_line() +
+  geom_line(aes(y = .mean), color = "blue") +
+  labs(title = "Forecast of Euthanized Cats in Austin Animal Center",
+       x = "Year",
+       y = "Total Euthanized Cats") +
+  theme_minimal()
+
+```
+
+```{r}
+
+# Create tsibble
+wildlife_tsbl <- animal_outcomes %>% 
+  drop_na() %>% 
+  filter(animal_type == "Cats" & outcome == "Euthanized") %>% 
+  group_by(year) %>% 
+  summarise(total_euth = sum(number_of_occurences)) %>% 
+  ungroup() %>% 
+  as_tsibble(index = year)
+
+# Fit ARIMA model
+wildlife_arima <- wildlife_tsbl %>% 
+  model(ARIMA(total_euth))
+
+# Generate forecasts
+wildlife_fcst <- wildlife_arima %>% 
+  forecast(h = 36)
+
+# Add source column to forecast
+wildlife_fcst %>%
+  mutate(source = "forecast") %>%
+  select(source, year, .mean) %>%
+  bind_rows(wildlife_tsbl %>% as_tibble() %>% mutate(source = "actual")) %>%
+  
+  # Plot the actuals and forecasts
+  ggplot(aes(x = year, y = .mean, color = source)) +
+  geom_line() +
+  labs(y = "Total Euthanized Cats") +
+  scale_color_manual(values = c("actual" = "black", "forecast" = "red")) +
+  theme_minimal()
+
+```
+
+```{r}
+
+# create tsibble
+wildlife_tsbl <- animal_outcomes %>% 
+  drop_na() %>% 
+  filter(animal_type == "Cats" & outcome == "Euthanized") %>% 
+  group_by(year) %>% 
+  summarise(total_euth = sum(number_of_occurences)) %>% 
+  ungroup() %>% 
+  as_tsibble(index = year)
+
+# fill gaps
+wildlife_tsbl_filled <- wildlife_tsbl %>% fill_gaps()
+
+# fit model and generate forecast
+wildlife_arima <- wildlife_tsbl_filled %>% 
+  model(ARIMA(total_euth))
+
+wildlife_forecast <- wildlife_arima %>% 
+  forecast(h = 36)
+
+# plot forecast
+wildlife_fcst <- wildlife_forecast %>% 
+  as_tibble() %>% 
+  mutate(source = "forecast")
+
+ggplot() +
+  geom_line(data = wildlife_tsbl_filled, aes(x = year, y = total_euth)) +
+  geom_line(data = wildlife_fcst, aes(x = year, y = .mean, color = source)) +
+  scale_color_manual(values = c("black", "red")) +
+  labs(title = "Cats Euthanized Over Time",
+       x = "Year",
+       y = "Number of Cats Euthanized")
+
+```
+
+```{r}
+
+# Convert to tsibble object
+wildlife_tsbl <- animal_outcomes %>%
+  drop_na() %>%
+  filter(animal_type == "Cats" & outcome == "Euthanized") %>%
+  group_by(year) %>%
+  summarise(total_euth = sum(number_of_occurences)) %>%
+  ungroup() %>%
+  as_tsibble(index = year)
+
+# Convert to time series object
+wildlife_ts <- ts(wildlife_tsbl$total_euth)
+
+# Fit ARIMA model
+wildlife_arima <- wildlife_ts %>%
+  model(ARIMA)
+
+# Generate forecasts
+wildlife_forecast <- wildlife_arima %>%
+  forecast(h = 36)
+
+# Combine observed data and forecasts
+wildlife_fcst <- bind_rows(
+  as_tibble(wildlife_tsbl),
+  as_tibble(wildlife_forecast) %>% 
+    rename(total_euth = .mean)
+) %>% 
+  mutate(source = if_else(is.na(total_euth), "Forecast", "Observed"))
+
+# Plot results
+wildlife_fcst %>%
+  ggplot(aes(x = year, y = total_euth, color = source)) +
+  geom_line() +
+  scale_color_manual(values = c("blue", "red")) +
+  labs(x = "Year", y = "Total Euthanized Cats", color = "Source", 
+       title = "Total Euthanized Cats in Austin, TX") +
+  theme_minimal()
+
+```
+```{r}
+
+# Convert ts object to tsibble
+wildlife_tsbl <- as_tsibble(wildlife_ts, index = "year")
+
+# Fit ARIMA model to tsibble
+wildlife_arima <- wildlife_tsbl %>% 
+  model(ARIMA(value))
+
+# Generate forecasts
+wildlife_forecast <- wildlife_arima %>% 
+  forecast(h = 36)
+
+# Convert forecast to a tsibble
+wildlife_fcst <- as_tsibble(wildlife_forecast, key = "year")
+
+# Plot the forecast
+wildlife_fcst %>%
+  ggplot(aes(x = year, y = .mean, color = source)) +
+  geom_line()
+
+```
+
+```{r}
+
+# Convert ts object to tsibble
+wildlife_tsbl <- as_tsibble(wildlife_ts, index = "year")
+
+# Fit ARIMA model to tsibble
+wildlife_arima <- wildlife_tsbl %>% 
+  model(ARIMA(value))
+
+# Generate forecasts
+wildlife_forecast <- wildlife_arima %>% 
+  forecast(h = 36)
+
+# Convert forecast to a tsibble
+wildlife_fcst <- as_tsibble(wildlife_forecast, key = "year")
+
+# Plot the forecast
+wildlife_fcst %>%
+  ggplot(aes(x = index, y = .mean, color = .model)) +
+  geom_line()
+
+
+```
+
+```{r}
+names(wildlife_fcst)
+
+library(lubridate)
+```
+
+###
+
+```{r}
+# grouping the data and creating a variable
+animal_complaints_grouped <- animal_complaints %>% 
+  group_by(date_received) %>% 
+  summarise(count = n()) %>% 
+  arrange(date_received)
+
+myts <- ts(animal_complaints_grouped$count, frequency = 12, start = c(year(animal_complaints_grouped$date_received[1]), month(animal_complaints_grouped$date_received[1])))
+
+myforecast <- forecast(auto.arima(myts), h = 24)
+
+
+plot(myforecast, main = "Forecasted values")
+
+```
+
+
+```{r}
+myts_forecast <- function(myts, h, interval) {
+  library(forecast)
+  
+  # Set the appropriate time interval for the forecast horizon
+  interval <- switch(interval,
+                     "day" = "days",
+                     "hour" = "hours",
+                     "minute" = "mins",
+                     "second" = "secs")
+  
+  # Create the forecast
+  myforecast <- forecast(myts, h = 24, level = c(80, 95), 
+                       xreg = mydummies, 
+                       lambda = NULL, biasadj = TRUE,
+                       fan = FALSE, 
+                       interval = "week")
+
+  
+  # Print the forecast table
+  print(myforecast)
+  
+  # Plot the forecast
+  autoplot(myforecast)
+}
+
+```
+
+```{r}
+print(interval)
+print(class(interval))
+print(length(interval))
+```
+
+```{r}
+# Create a sequence of dates for the next 24 months
+dates <- seq(as.Date("2023-03-01"), by = "month", length.out = 24)
+
+# Create a time series object with random values for demonstration purposes
+values <- rnorm(24)
+myts <- ts(values, start = c(year(dates[1]), month(dates[1])), frequency = 12)
+
+# Plot the time series
+plot(myts)
+
+# Forecast the next 24 months
+library(forecast)
+myforecast <- forecast(myts, h = 24)
+
+# Plot the forecasted values
+plot(myforecast)
+
+```
+
+
+
+### Another, FINAL attempt
+
+This is quite difficult indeed. Let's try go slowly using the notes, build it bit by bit.
+
+```{r}
+library(feasts)
+
+animal_complaints_grouped <- animal_complaints_grouped %>% 
+  drop_na()
+```
+
+So all we wanna do, is plot the next few years, and see what it will look like on the graph. Nothing needs to be too fancy. We will keep it simple, create a simple model. Then plot this. OK.
+
+So first, it needs to be tsibble.
+```{r}
+animal_complaints_tsibble <- as_tsibble(animal_complaints_grouped, index = date_received)
+
+animal_complaints_tsibble <- animal_complaints_tsibble %>% 
+  mutate(date_received = tsibble::yearmonth(date_received)) %>% 
+  mutate(count = as.double(count))
+```
+
+It has now been converted to a tsibble, with date_received as the index. As it contains only a single time series, a key should not be necessary.
+
+```{r}
+library(tidyverse)
+library(fable)
+library(tsibble)
+library(tsibbledata)
+# We also need to use the "urca" package to be able to use the ARIMA model
+library(urca)
+```
+
+We load in all packages just to be 100% sure they are loaded. 
+
+```{r}
+# no need to deselect variables; we already have the only 2 we will need.
+
+# next, we will use autoplot
+autoplot(animal_complaints_tsibble)
+```
+
+Our data is there. Now, we will fit a model.
+
+```{r}
+library(purrr)
+
+fit <- animal_complaints_tsibble %>%
+  model(
+    snaive = SNAIVE(count),
+    mean_model = MEAN(count),
+    arima = ARIMA(count)
+  )
+fit
+
+# fit %>% 
+#   dmap(unlist)
+```
+
+Here is our mable, also called model table. Each cell corresponds to a fitted model. Now, we will calculate some forecasts using our model.
+
+```{r}
+forecast_1 <- fit %>%
+  fabletools::forecast(h = 36)
+forecast_1
+```
+
+OK, looking good so far.
+
+```{r}
+forecast_1 %>%
+  autoplot(animal_complaints_tsibble)
+```
+
+Let's make our model look pretty and have less clutter
+
+```{r}
+forecast_1 %>%
+  filter(.model == "arima") %>% 
+  autoplot(animal_complaints_tsibble, level = 95) +
+  scale_x_yearmonth(date_breaks = "6 months", date_labels = "%b %y") + 
+  labs(title = "Townsville Complaint Calls with Prediction",
+       x = "Time",
+       y = "Number of Calls") +
+  theme_economist() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, family = "mono", face = "bold", size = 7),
+        #axis.ticks.x = 
+        axis.title.y = element_text(vjust = 3.2),
+        title = element_text(family = "mono", face = "bold"),
+        plot.title = element_text(hjust = 0.4),
+        legend.title = element_blank(),
+        legend.position = "none") +
+        annotate("rect", xmin = as.Date("2014-06-01"), xmax = as.Date("2014-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2015-06-01"), xmax = as.Date("2015-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2016-06-01"), xmax = as.Date("2016-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2017-06-01"), xmax = as.Date("2017-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2018-06-01"), xmax = as.Date("2018-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2019-06-01"), xmax = as.Date("2019-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2020-06-01"), xmax = as.Date("2020-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2021-06-01"), xmax = as.Date("2021-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2022-06-01"), xmax = as.Date("2022-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3) +
+        annotate("rect", xmin = as.Date("2023-06-01"), xmax = as.Date("2023-08-01"), ymin = -Inf, ymax = Inf, fill = "gray70", alpha = 0.3)
+                        
+```
+
+So I was also tasked with creating a model, to predict how things might look for the next few years. I focused specifically on the Townsville data, as this was most suitable for forecasting. I used something called the "ARIMA" model, the inner workings of which are quite complicated, but basically it predicts the future based on the past, and is quite good when it comes to seasonal data like I have here. The blue line is the prediction, and the light blue area you see highlighted around it is the confidence interval. Think of this like a margin of error, and it basically means that 95% of the time, our model will predict results in this area.
+
+This model suggests that roughly the same pattern will continue as before, with fairly steady volume of calls and high peaks in Winter. But bear in mind this model is quite limited and shouldn't be taken as fact; for example, it doesn't take into account natural disasters and other events which could cause an increase in complaint calls.
+
+
+
+### Documentation note
+
+Fix or discuss the error of NT and NSW swapping for 2016-2018
+
+```{r}
+animal_outcomes %>% 
+  mutate(region = if())
+```
 
