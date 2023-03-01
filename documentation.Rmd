@@ -1,0 +1,137 @@
+---
+title: "Documentation"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+# Context
+
+
+## Business intelligence and data-driven decision making
+
+From my analysis, the RSCPA could gain a few insights. They could learn the animal demographics of different regions, for example, one territory might have a high number of wildlife, or another may have a high number of cats. This could indicate to the RSCPA that different methods will be needed in different parts of the country to help it progress towards its goals. Furthermore, my analysis could show insights on the general trends of different animal outcomes (rehoming, reclaiming, euthanization etc.). In particular, the RSPCA is interested in decreasing euthanizations and increasing the rates of rehoming and reclaiming, and my analysis will be able to show, through data, these trends (or indeed if there are any noticeable trends). These insights will all give the RSPCA information on where to focus their resources, and the different challenges affecting different parts of Australia and dealing with different animals- in other words, helping them make better business decisions. 
+
+
+## Domain knowledge and the business context
+
+The organisation I have been asked to produce analysis for is the RSPCA (Royal Society for the Prevention of Cruelty to Animals). They are Australia's oldest, largest and most trusted animal welfare organisation. In the year of 2018 alone they received over 130,000 animals into their shelters and adoption centres across the country. Through hard work and concerted efforts, they have managed to increase their rates of adoption and reclaiming, improving the outcomes for hundreds of thousands of cats and dogs, who have either been reunited with their owners or have found a new home.
+
+My analysis will answer questions that the RSPCA had asked for the purposes of gaining more insight into the animals, especially the cats and dogs, of Australia. Here are the questions I have set out to answer:
+
+**How have the outcomes for different types of animal changed over time?** 
+**Are there any major differences between the way different States of Australia deal with animals?** 
+**Are there any anomalies in the data?**
+
+**Total call volume for complaint calls: How has this trended over time?** 
+**Is there a particular animal being called about the most?** 
+**Do particular suburbs have different type of complaint calls? Do they call about different animals?**
+
+**Business Intelligence – using the insights you have found, can you predict how this might look for the upcoming year?**
+
+
+Answering these questions will help the RSCPA make more informed decisions in the future through the power of data, with the goal of further increasing their rates of adoption and reclaiming. I believe my analysis will help the RSPCA move forward in their goal and improve animal welfare across Australia as a whole.
+
+# Data
+
+## Internal and external data sources
+
+For this project, I was given three sources of data. The first, which was internal, is from the open RSPCA database and covers Australia as a whole, divided into regions. It looks at the outcomes for cats, dogs and other animals the RSPCA has received into its care (i.e, whether they were rehomed, euthanised, still in stock and so on), with data spanning from 1999 to 2018. This dataset (animal_outcomes.csv) has 664 rows and 12 columns (its dimensions are 664 × 12).
+
+The next two sources I was given concern data specific to Townsville and Brisbane, two large Australian cities. These are external datasets, provided from local councils rather than the RSPCA themselves.
+
+The Townsville dataset (animal_complaints.csv) has 42,413 rows and 5 columns (its dimensions are 42,413 × 5). The Brisbane dataset (brisbane_complaints.csv) has 31,330 rows and 7 columns (its dimensions are 31,330 × 7).
+
+Townsville is a city on the north-eastern coast of Queensland, Australia. With a population of 180,000, it is the largest settlement in North Queensland; it is unofficially considered the capital of North Queensland. Brisbane is the official capital of Queensland, and is about 1000km South East of Townsville, in the centre of South East Queensland. It's population is about 2.6 million. 
+
+Both datasets consists of data gathered by their respective councils, and concern the volume and type of animal complaints received overtime. This is further broken by suburb.
+
+## Types of data
+
+I worked with many types of data. There was numerical data concerning counts, broken down by region and animal outcome. 
+
+There was categorical data concerning regions and suburbs, types of animal and types of complaint and outcomes of animals (this was nominal, as there was no inherent order). 
+
+I worked also with dates, some aggregated by year, some by month and some by quarter.
+
+
+
+## Data formats
+
+The raw data all came in the form of downloaded flat files (CSV files).
+
+## Data quality and bias
+
+The data is from a trusted source and is of high quality. The internal data from the RSPCA was especially useful; all though there was a few issues that had to be discovered where certain values were incorrect. 
+
+The external data, from the councils, was less useful. For example, the Brisbane data had values that even through cleaning could not be fully made sense of; it was a messy and inconsistent format that could be only fixed to a certain degree.
+
+Further, these 2 council datasets both concerned councils from Queensland. This meant they were only useful for drawing conclusions for Queensland, in fact, only for these 2 cities in Queensland could valid conclusions be drawn. In this sense I would say the data was biased; only data from a specific demographic was given even though a broader demographic would've been of interest to the RSPCA.
+
+# Ethics
+
+## Ethical issues in data sourcing and extraction
+
+There is no ethical issues concerning the sourcing and extraction of this data. It was aggregated and anonymised on such a level that no privacy laws or concerns were breached. Though the local council data is broken down by suburb, it does not breach privacy as no sensitive information can be gleamed from this. 
+
+
+## Ethical implications of business requirements
+
+In some sense, there is ethical implications of the business requirements. The RSPCA is involved in the welfare of animals, and is responsible for enforcing laws regarding animal welfare as well as the care of hundreds of thousands of Australia's animals. They often have to perform many euthanizations, which is a tough ethical decision to make. However, the RSCPA, though it may sometimes have to make difficult decisions, is a trusted organisation, commited to improving animal welfare across the country. 
+
+Therefore, though there is ethical implications involved in the RSPCA's business, it is clear they are a general force for good in the world.
+
+
+# Analysis
+
+## Stages in the data analysis process
+
+### Planning
+
+The first stage, consisted of planning. I wrote out the questions I had been asked, and decided that my efforts would be focused on answering these questions as thoroughly as possible. I created a GitHub repo for version control, and a new project file. At this point in the process, the main thing I kept in mind was to always focus on answering the business questions. It is easy to get distracted while working with large datasets and lose focus, so I made sure the end goal of answering these business questions was always kept in mind throughout the process.
+
+### Cleaning and Exploratory Analysis
+
+Analysis consisted of a few stages. First, I cleaned the data and performed some basic analysis, creating simple visualisations using ggplot. I then transferred the cleaning steps to a cleaning script, and began my 2nd stage of analysis.
+
+### More Complex and Detailed Analysis 
+
+I began more detailed analysis, trying to discover as much as I could about my data. This took a while and many attempts, and a large amount of graphs were created. There were many wrong turns but this is where the spent the bulk of my time. During this stage I also discovered some more problems with the data, which as I dealt with I added to the cleaning script accordingly. 
+
+### Forecasting
+
+Next, I worked on creating a forecasting model to predict how Townsville's complaint calls might look in the next few years. Getting this to work proved difficult but after much perseverance it was accomplished. I tried a few different models, including a Seasonal Naive model and a mean model, but after investigation and research decided that the ARIMA model would be the most appropriate for this data.
+
+### Preparation for Presentation: Final Analysis
+
+Finally, I began the last stage of analysis, which involved preparing a script for my presentation and distilling all the insights and things I had learned into more concise points and a cohesive narrative. This sometimes led to more investigation into things I had previously overlooked, and going back to the drawing board to perform more detailed analysis again.
+
+## Tools for data analysis
+
+The first tool used, was pen and paper. I wrote out the business questions, and my initial plans for the project here. As the process continued, I also returned to pen and paper many times to lay out plans clearly.
+
+For my analysis, I used R, using R Studio. The main tools I used for my analysis were a combination of tidyverse functions; in particular the group_by and summarise functions, with ggplot visualisations. I used a combination of line graphs (for time series data) and bar graphs (for counts and proportions), also using facet_wrap to get more out of my data. I also used the forecast package to create predictions using the ARIMA model.
+
+I also used Git and GitHub (specifically GitHub Desktop) for version control. This allowed me to be secure in making changes to my project, as by making regular commits, I knew I could access older versions of my project if anything were to go wrong.
+
+For creating the presentation, I used Google Presentation. This allowed me to easily and quickly create slides to convey the points I wanted to make, while also having my own notes to expand on the slides.
+
+Another tool used was Zoom, this allowed me to share my screen and present the project seamlessly.
+
+
+## Descriptive, diagnostic, predictive and prescriptive analysis
+
+Descriptive Analytics - much of my analysis falls into this category. For example, I looked at the past trends of euthanizations by region and by type of animal.
+
+Diagnostic Analytics - some of my analysis falls into this category. For example, I looked at the spike in 2006 for wildlife in Western Australia, and diagnosed a potential reason for this being the cyclone Emma (which swept through Western Australia in 2006)
+
+Predictive Analytics - my forecast model for Townsville complaint calls falls into this category. I predicted what the trend of the next 3 years of calls might look like using an ARIMA model.
+
+Prescriptive Analytics - some of my analysis falls into this category. I recommended that the RSPCA investigates the high cat numbers in Townsville City, and suggested that control of the stray cat population here would be a potential course of action.
+
+
+
+
+
+
